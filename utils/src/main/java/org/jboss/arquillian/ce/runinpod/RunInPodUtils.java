@@ -21,32 +21,44 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.arquillian.ce.utils;
+package org.jboss.arquillian.ce.runinpod;
 
-import java.io.InputStream;
-import java.util.Map;
+import java.lang.reflect.Method;
+
+import org.jboss.arquillian.ce.api.RunInPod;
+import org.jboss.shrinkwrap.api.Archive;
 
 /**
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
  */
-public interface Proxy {
-    void setDefaultSSLContext();
+public class RunInPodUtils {
 
-    String url(String host, String version, String namespace, String podName, String path, String parameters);
+    public static boolean hasRunInPod(Class<?> clazz) {
+        if (clazz == Object.class) {
+            return false;
+        }
 
-    String url(Map<String, String> labels, String host, String version, String namespace, String path, String parameters);
+        Method[] methods = clazz.getMethods();
+        for (Method m : methods) {
+            if (isRunInPod(clazz, m)) {
+                return true;
+            }
+        }
 
-    String url(Map<String, String> labels, String host, String version, String namespace, int index, String path, String parameters);
+        return hasRunInPod(clazz.getSuperclass());
+    }
 
-    int getReadyPodsSize(Map<String, String> labels, String namespace);
+    public static boolean isRunInPod(Class<?> clazz, Method method) {
+        if (clazz.isAnnotationPresent(RunInPod.class)) {
+            return true;
+        }
+        if (method.isAnnotationPresent(RunInPod.class)) {
+            return true;
+        }
+        return false;
+    }
 
-    <T> T post(String url, Class<T> returnType, Object requestObject) throws Exception;
-
-    InputStream post(Map<String, String> labels, Configuration configuration, int pod, String path) throws Exception;
-
-    int status(String url);
-
-    String findPod(Map<String, String> labels, String namespace);
-
-    String findPod(Map<String, String> labels, String namespace, int index);
+    public static Archive<?> getRunAsPodArchive(Class<?> clazz) {
+        return null; // TODO
+    }
 }
